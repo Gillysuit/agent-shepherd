@@ -51,6 +51,8 @@ export type HerdSettings = {
   collapseAgents: boolean
   hideIdle: boolean
   hideFinished: boolean
+  // Smaller text and no gaps between rows, for a small screen.
+  compact: boolean
   staleSeconds: number
   recentMinutes: number
 }

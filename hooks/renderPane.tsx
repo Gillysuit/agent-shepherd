@@ -43,11 +43,15 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
     read($, settings),
   ])
   const isOpen = openChoice ?? !prefs.collapseAgents
+  // Compact steps the text down a size and drops the gaps between rows.
+  const gap = prefs.compact ? 0 : 1
+  const title = prefs.compact ? ({ size: 'footnote' } as const) : {}
+  const meta = prefs.compact ? ({ size: 'caption' } as const) : {}
   const shownSessions = live
     .filter(row => !prefs.hideIdle || row.status !== 'idle' || row.id === myId)
     .sort((a, b) => ORDER[a.status] - ORDER[b.status] || b.since - a.since)
     .slice(0, 12)
-  const room = Math.max(1, Math.floor(((e.viewport?.rows ?? 24) - 9 - shownSessions.length * 2) / 3))
+  const room = Math.max(1, Math.floor(((e.viewport?.rows ?? 24) - 9 - shownSessions.length * 2) / (2 + gap)))
   const shownAgents = list
     .filter(row => !prefs.hideFinished || isActive(row))
     .reverse()
@@ -74,7 +78,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
         <Box flexDirection="row" justifyContent="space-between" alignItems="center" gap={1}>
           <Box flexDirection="row" gap={1} flexShrink={1}>
             <Text color={SESSION_MARK[row.status].color}>{SESSION_MARK[row.status].glyph}</Text>
-            <Text weight="semibold">{row.title || 'Untitled session'}</Text>
+            <Text weight="semibold" {...title}>{row.title || 'Untitled session'}</Text>
           </Box>
           {canOpen && (
             <Button
@@ -85,7 +89,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
                   .catch(() => $.ui.toast('Could not open that session.'))
               }
             >
-              Open
+              <Text {...meta}>Open</Text>
             </Button>
           )}
           {isMine && (
@@ -96,7 +100,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
             </Box>
           )}
         </Box>
-        <Text {...tint(row.status === 'idle', SESSION_MARK[row.status].color)}>
+        <Text {...tint(row.status === 'idle', SESSION_MARK[row.status].color)} {...meta}>
           {[
             `${row.status} ${elapsed(Math.max(at, row.since) - row.since)}`,
             row.project,
@@ -117,13 +121,13 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
       <Box flexDirection="row" justifyContent="space-between" gap={1}>
         <Box flexDirection="row" gap={1}>
           <Text color={AGENT_MARK[row.status].color}>{AGENT_MARK[row.status].glyph}</Text>
-          <Text weight="semibold">{row.description}</Text>
+          <Text weight="semibold" {...title}>{row.description}</Text>
         </Box>
-        <Text dimColor tabular>
+        <Text dimColor tabular {...meta}>
           {elapsed((row.endedAt ?? Math.max(at, row.startedAt)) - row.startedAt)}
         </Text>
       </Box>
-      <Text {...tint(row.status === 'stopped', AGENT_MARK[row.status].color)}>
+      <Text {...tint(row.status === 'stopped', AGENT_MARK[row.status].color)} {...meta}>
         {[
           row.status,
           row.type,
@@ -144,7 +148,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
           ([mark, label]) => (
           <Box key={label} flexDirection="row" gap={1}>
             <Text color={mark.color}>{mark.glyph}</Text>
-            <Text dimColor>{label}</Text>
+            <Text dimColor {...meta}>{label}</Text>
           </Box>
           ),
         )}
@@ -157,7 +161,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
   // percent resolved against no height there.
   return (
     <Box flexDirection="column" gap={1} flexGrow={1} minHeight={e.props.scroll.bodyRows}>
-      <Box flexDirection="column" gap={1} flexGrow={1}>
+      <Box flexDirection="column" gap={gap} flexGrow={1}>
         <Box flexDirection="column">
           <Box flexDirection="row" justifyContent="space-between" gap={1}>
             <Text weight="semibold">Sessions</Text>
@@ -165,7 +169,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
               ⚙
             </Button>
           </Box>
-          <Text dimColor>
+          <Text dimColor {...meta}>
             {live.length === 0
               ? 'No live sessions yet.'
               : count(live, ['blocked', 'done', 'working', 'idle'] as const)}
@@ -181,7 +185,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
               >
                 <Text weight="semibold">{isOpen ? '▾' : '▸'} Subagents</Text>
               </Button>
-              <Text dimColor>
+              <Text dimColor {...meta}>
                 {list.length === 0
                   ? 'No subagents yet.'
                   : count(list, ['working', 'blocked', 'done', 'failed'] as const)}

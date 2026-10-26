@@ -204,6 +204,7 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
     ['On', 'primary'], // start collapsed
     ['Off', 'secondary'], // hide idle
     ['Off', 'secondary'], // hide finished
+    ['Off', 'secondary'], // compact
     ['Choose…', undefined], // pick the sounds folder in the Finder
     ['Show', undefined], // open the sounds folder in the Finder
     ['▶', undefined], // play the done sound
@@ -234,5 +235,13 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
   expect((await prefs.findAll({ type: 'Text', text: MARKS })).map(t => [t.text, t.props.color])).toEqual([
     ['●', TEAL], ['●', Y], ['◉', PINK], ['●', TEAL], ['○', GREEN],
   ])
+
+  // Compact steps the rows' text down a size.
+  expect((await prefs.find({ type: 'Text', text: /^done \d+s · my-app/ }))?.props.size).toBeUndefined()
+  await prefs.press({ key: 'open-settings' })
+  await prefs.press({ key: 'setting-compact' })
+  await prefs.press({ key: 'close-settings' })
+  expect(store.get('settings')).toMatchObject({ compact: true })
+  expect((await prefs.find({ type: 'Text', text: /^done \d+s · my-app/ }))?.props.size).toBe('caption')
   await prefs.unmount()
 })

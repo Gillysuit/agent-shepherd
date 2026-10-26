@@ -9,7 +9,7 @@ const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DE
 const view = atom({ plugin: 'agent-shepherd', key: 'view' } as const, 'list')
 const soundsStamp = atom({ plugin: 'agent-shepherd', key: 'soundsStamp' } as const, 0)
 
-type Flag = 'openOnStart' | 'hideAgents' | 'collapseAgents' | 'hideIdle' | 'hideFinished'
+type Flag = 'openOnStart' | 'hideAgents' | 'collapseAgents' | 'hideIdle' | 'hideFinished' | 'compact'
 
 const FLAGS: readonly (readonly [Flag, string])[] = [
   ['openOnStart', 'Open this pane in every new session'],
@@ -17,6 +17,7 @@ const FLAGS: readonly (readonly [Flag, string])[] = [
   ['collapseAgents', 'Start with subagents collapsed'],
   ['hideIdle', 'Hide idle sessions'],
   ['hideFinished', 'Hide finished subagents'],
+  ['compact', 'Compact layout'],
 ]
 
 const duration = (seconds: number) =>

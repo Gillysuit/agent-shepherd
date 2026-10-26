@@ -25,6 +25,7 @@ export const DEFAULT_SETTINGS: HerdSettings = {
   collapseAgents: true,
   hideIdle: false,
   hideFinished: false,
+  compact: false,
   staleSeconds: 30,
   recentMinutes: 120,
 }
@@ -38,7 +39,7 @@ const silenced = (saved: object) => 'sounds' in saved && saved.sounds === false
 // The store holds JSON another version may have written: keep what fits.
 export const normalizeSettings = (value: unknown): HerdSettings => {
   const saved = typeof value === 'object' && value !== null ? (value as Partial<HerdSettings>) : {}
-  const flag = (key: 'openOnStart' | 'hideAgents' | 'collapseAgents' | 'hideIdle' | 'hideFinished') =>
+  const flag = (key: 'openOnStart' | 'hideAgents' | 'collapseAgents' | 'hideIdle' | 'hideFinished' | 'compact') =>
     typeof saved[key] === 'boolean' ? saved[key] : DEFAULT_SETTINGS[key]
   return {
     openOnStart: flag('openOnStart'),
@@ -52,6 +53,7 @@ export const normalizeSettings = (value: unknown): HerdSettings => {
     collapseAgents: flag('collapseAgents'),
     hideIdle: flag('hideIdle'),
     hideFinished: flag('hideFinished'),
+    compact: flag('compact'),
     staleSeconds:
       typeof saved.staleSeconds === 'number' && saved.staleSeconds > 0
         ? saved.staleSeconds
@@ -72,5 +74,6 @@ export const sameSettings = (a: HerdSettings, b: HerdSettings) =>
   a.collapseAgents === b.collapseAgents &&
   a.hideIdle === b.hideIdle &&
   a.hideFinished === b.hideFinished &&
+  a.compact === b.compact &&
   a.staleSeconds === b.staleSeconds &&
   a.recentMinutes === b.recentMinutes
