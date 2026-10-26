@@ -204,6 +204,8 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
     ['On', 'primary'], // start collapsed
     ['Off', 'secondary'], // hide idle
     ['Off', 'secondary'], // hide finished
+    ['Choose…', undefined], // pick the sounds folder in the Finder
+    ['Show', undefined], // open the sounds folder in the Finder
     ['▶', undefined], // play the done sound
     ['▶', undefined], // play the approval sound
   ])

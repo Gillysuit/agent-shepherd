@@ -42,10 +42,13 @@ test('sounds in the person’s folder join the choices, and play from there', as
   }))
   on('fs.read', () => ({ value: '' }))
   on('fs.write', () => ({ value: undefined }))
+  // The Finder's chooser answers with the folder picked, as osascript prints it.
+  let picked = '/music/\n'
   on('process.run', (_, e) => {
     played.push([...e.argv])
+    const stdout = e.argv[0] === 'osascript' ? picked : ''
     return {
-      value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
+      value: { exitCode: stdout ? 0 : 1, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
     }
   })
   on('ui.toast', (_, e) => {
@@ -72,9 +75,9 @@ test('sounds in the person’s folder join the choices, and play from there', as
   }
 
   // The default folder is read with no setup; only its audio files are offered.
-  expect((await prefs.find({ key: 'setting-sounds-folder' }))?.props.value).toBe(
-    '~/.claude/agent-shepherd/sounds',
-  )
+  expect(
+    await prefs.find({ type: 'Text', text: '~/.claude/agent-shepherd/sounds · 2 sounds in the lists below' }),
+  ).toBeDefined()
   expect(await lastChoices()).toEqual([
     { value: `file:${MINE}/bark.wav`, label: 'bark' },
     { value: `file:${MINE}/meow.mp3`, label: 'meow' },
@@ -85,8 +88,15 @@ test('sounds in the person’s folder join the choices, and play from there', as
   expect(store.get('settings')).toMatchObject({ doneSound: `file:${MINE}/bark.wav` })
   expect(played.at(-1)).toEqual(['afplay', `${MINE}/bark.wav`])
 
-  // A new folder is listed at once; the chosen sound stays, though it is elsewhere.
-  await prefs.input({ key: 'setting-sounds-folder', text: '/music' })
+  // Show opens the folder in the Finder, made first so there is somewhere to drop sounds.
+  await prefs.press({ key: 'show-sounds-folder' })
+  expect(played.slice(-2)).toEqual([['mkdir', '-p', MINE], ['open', MINE]])
+
+  // Choose opens the Finder's chooser on the current folder; a new folder is
+  // listed at once, and the chosen sound stays, though it is elsewhere.
+  await prefs.press({ key: 'choose-sounds-folder' })
+  expect(played.at(-1)?.[0]).toBe('osascript')
+  expect(played.at(-1)?.at(-1)).toBe(MINE)
   expect(store.get('settings')).toMatchObject({ soundsFolder: '/music' })
   expect(toasts.at(-1)).toBe('Found 1 sound')
   expect(await lastChoices()).toEqual([
@@ -94,4 +104,12 @@ test('sounds in the person’s folder join the choices, and play from there', as
     { value: `file:${MINE}/bark.wav`, label: 'bark' },
   ])
   expect((await prefs.find({ key: 'setting-done-sound' }))?.props.value).toBe(`file:${MINE}/bark.wav`)
+
+  // A folder in the home folder is saved with ~; a cancel changes nothing.
+  picked = '/home/t/Music/\n'
+  await prefs.press({ key: 'choose-sounds-folder' })
+  expect(store.get('settings')).toMatchObject({ soundsFolder: '~/Music' })
+  picked = ''
+  await prefs.press({ key: 'choose-sounds-folder' })
+  expect(store.get('settings')).toMatchObject({ soundsFolder: '~/Music' })
 })

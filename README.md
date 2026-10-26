@@ -14,7 +14,7 @@ A herdr-style status pane for Claude Code. It sits beside the chat and shows eve
 - **herdr's states and colors.** ● working, ◉ needs approval, ● done, ○ idle, and ✕ failed for subagents. Sessions that need you sort to the top.
 - **Open any session.** Each row has an Open button that jumps the desktop app to that session.
 - **Subagents.** A collapsible section lists this session's subagents with their task, type, tool count and current tool.
-- **Sounds.** A sound when a session finishes and another when it needs approval: two chimes that ship with the mod, any macOS system sound, or your own. Drop `.wav`, `.aiff`, `.mp3` or `.m4a` files in `~/.claude/agent-shepherd/sounds/` (or point settings at another folder) and they join both lists.
+- **Sounds.** A sound when a session finishes and another when it needs approval: two chimes that ship with the mod, any macOS system sound, or your own. Drop `.wav`, `.aiff`, `.mp3` or `.m4a` files in `~/.claude/agent-shepherd/sounds/` (or pick another folder with Choose… in settings; Show opens it in the Finder) and they join both lists. Short clips work best: wav or aiff, under 2 seconds.
 - **Settings.** The ⚙ button opens settings, saved for every session: open the pane in every new session, your sounds folder, the two sounds (each with a ▶ preview), hide subagents, start them collapsed, hide idle sessions, hide finished subagents, and how long a quiet session stays listed.
 
 ## Install

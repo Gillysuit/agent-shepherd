@@ -35,7 +35,7 @@ export const isSound = (value: unknown): value is string =>
 export const fileLabel = (value: string) =>
   (value.split('/').pop() ?? value).replace(/\.[^.]+$/, '')
 
-async function expandHome($: EngineInterface, path: string) {
+export async function expandHome($: EngineInterface, path: string) {
   if (path !== '~' && !path.startsWith('~/')) return path
   return `${(await $.env.get('HOME')) ?? ''}${path.slice(1)}`
 }
@@ -51,6 +51,43 @@ export async function folderSounds($: EngineInterface, folder: string): Promise<
     .map(entry => `${FILE}${dir}/${entry.name}`)
     .sort((a, b) => a.localeCompare(b))
     .map(value => ({ value, label: fileLabel(value) }))
+}
+
+// The Finder's folder chooser, opened on the current folder where it exists.
+// Waits while the person looks; a cancel or a failure picks nothing.
+const CHOOSE_FOLDER = [
+  'on run argv',
+  'activate',
+  'set msg to "Choose a folder of sounds"',
+  'try',
+  'set start to (POSIX file (item 1 of argv)) as alias',
+  'on error',
+  'return POSIX path of (choose folder with prompt msg)',
+  'end try',
+  'return POSIX path of (choose folder with prompt msg default location start)',
+  'end run',
+]
+
+export async function chooseFolder($: EngineInterface, current: string): Promise<string | null> {
+  const start = await expandHome($, current.trim())
+  const lines = CHOOSE_FOLDER.flatMap(line => ['-e', line])
+  const result = await $.process
+    .run(['osascript', ...lines, start], { timeoutMs: 10 * 60_000 })
+    .catch(() => null)
+  const picked = result?.exitCode === 0 ? result.stdout.trim().replace(/\/+$/, '') : ''
+  if (!picked) return null
+  // Saved the way it is shown, with the home folder as ~.
+  const home = (await $.env.get('HOME')) ?? ''
+  return home && (picked === home || picked.startsWith(`${home}/`)) ? `~${picked.slice(home.length)}` : picked
+}
+
+// Opens the folder in the Finder, making it first so there is somewhere to
+// drop sounds.
+export async function showFolder($: EngineInterface, folder: string) {
+  const dir = await expandHome($, folder.trim())
+  if (!dir) return
+  await $.process.run(['mkdir', '-p', dir]).catch(() => undefined)
+  await $.process.run(['open', dir]).catch(() => undefined)
 }
 
 // Plays a sound by its setting's value; off, unknown or unplayable stays silent.

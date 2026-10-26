@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, RenderChildren, RenderInput } from 'claude-code'
 
 import type { HerdSettings } from '../types'
-import { SOUND_OPTIONS, fileLabel, folderSounds, playSound } from './sounds'
+import { SOUND_OPTIONS, chooseFolder, fileLabel, folderSounds, playSound, showFolder } from './sounds'
 import { DEFAULT_SETTINGS, RECENT_CHOICES, SETTINGS_KEY, STALE_CHOICES } from './state'
 
 const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
@@ -25,7 +25,6 @@ export async function renderSettings($: EngineInterface, e: RenderInput<'Pane'>)
   const table = $.ui.resolve(e)
   const { Box, Button, Text } = table
   const Select = 'Select' in table ? table.Select : undefined
-  const Input = 'Input' in table ? table.Input : undefined
   const current = await read($, settings)
 
   // The person's own sounds follow the built-in ones. A chosen file that is no
@@ -96,31 +95,35 @@ export async function renderSettings($: EngineInterface, e: RenderInput<'Pane'>)
     void playSound($, name)
   }
 
-  // A new folder is listed at once, and a toast says what it holds.
-  const chooseFolder = async (folder: string) => {
-    save({ ...current, soundsFolder: folder.trim() })
+  // The Finder picks the folder; a new one is listed at once, and a toast says
+  // what it holds.
+  const pickFolder = async () => {
+    const folder = await chooseFolder($, current.soundsFolder)
+    if (folder === null) return
+    save({ ...current, soundsFolder: folder })
     const found = (await folderSounds($, folder)).length
     $.ui.toast(found ? `Found ${found} sound${found === 1 ? '' : 's'}` : 'No sounds in that folder')
   }
 
   const folderRow = (
     <Box key="sounds-folder" flexDirection="column">
-      {Input ? (
-        <Input
-          key="setting-sounds-folder"
-          label="Sounds folder"
-          value={current.soundsFolder}
-          placeholder="none"
-          submitLabel="save"
-          onSubmit={folder => void chooseFolder(folder)}
-        />
-      ) : (
-        <Text>Sounds folder: {current.soundsFolder || 'none'}</Text>
-      )}
+      <Box flexDirection="row" justifyContent="space-between" alignItems="center" gap={1}>
+        <Text>Sounds folder</Text>
+        <Box flexDirection="row" alignItems="center" gap={1}>
+          <Button key="choose-sounds-folder" onPress={() => void pickFolder()}>
+            Choose…
+          </Button>
+          <Button key="show-sounds-folder" onPress={() => void showFolder($, current.soundsFolder)}>
+            Show
+          </Button>
+        </Box>
+      </Box>
       <Text dimColor>
-        {mine.length
-          ? `${mine.length} sound${mine.length === 1 ? '' : 's'} added to the lists below`
-          : 'Add .wav, .aiff, .mp3 or .m4a files to use them below'}
+        {`${current.soundsFolder || 'none'} · ${
+          mine.length
+            ? `${mine.length} sound${mine.length === 1 ? '' : 's'} in the lists below`
+            : 'add .wav, .aiff, .mp3 or .m4a files'
+        }`}
       </Text>
     </Box>
   )
