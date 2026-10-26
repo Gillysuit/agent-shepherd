@@ -7,13 +7,13 @@ import type { DesktopRecord } from './desktopSessions'
 import { DEFAULT_SETTINGS, SETTINGS_KEY, isActive, normalizeSettings, sameSettings } from './state'
 
 const IDLE: SelfState = { title: '', status: 'idle', since: 0 }
-const agents = atom({ plugin: 'agent-herd', key: 'agents' } as const, [])
-const self = atom({ plugin: 'agent-herd', key: 'self' } as const, IDLE)
-const sessions = atom({ plugin: 'agent-herd', key: 'sessions' } as const, [])
-const settings = atom({ plugin: 'agent-herd', key: 'settings' } as const, DEFAULT_SETTINGS)
+const agents = atom({ plugin: 'agent-shepherd', key: 'agents' } as const, [])
+const self = atom({ plugin: 'agent-shepherd', key: 'self' } as const, IDLE)
+const sessions = atom({ plugin: 'agent-shepherd', key: 'sessions' } as const, [])
+const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
 
 async function folder($: EngineInterface) {
-  return `${(await $.env.get('HOME')) ?? ''}/.claude/agent-herd/sessions`
+  return `${(await $.env.get('HOME')) ?? ''}/.claude/agent-shepherd/sessions`
 }
 
 const parse = (text: string): SessionBeat | null => {
@@ -94,6 +94,22 @@ export async function refresh($: EngineInterface) {
   const seen = new Set(watched.map(row => row.id))
   const unwatched = (desktop?.rows ?? []).filter(row => !seen.has(row.id))
   await update($, sessions, () => [...watched, ...unwatched])
+}
+
+// The mod was first published as agent-herd, whose store sits beside this one
+// under the old name: read its settings once, so a rename keeps your choices.
+export async function settingsFromOldName($: EngineInterface): Promise<unknown> {
+  const dir = `${(await $.env.get('HOME')) ?? ''}/.claude/plugins/store`
+  const entries = await $.fs.list(dir).catch(() => [])
+  const old = entries.find(entry => entry.name.startsWith('agent-herd_') && entry.name.endsWith('.json'))
+  if (!old) return undefined
+  const text = await $.fs.read(`${dir}/${old.name}`).catch(() => '')
+  try {
+    const value: unknown = JSON.parse(text)
+    return typeof value === 'object' && value !== null && 'settings' in value ? value.settings : undefined
+  } catch {
+    return undefined
+  }
 }
 
 export async function sync($: EngineInterface) {

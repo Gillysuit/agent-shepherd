@@ -1,7 +1,7 @@
 import type { AgentRow, HerdSettings } from '../types'
 import { isSound } from './sounds'
 
-export const PANE = 'agent-herd'
+export const PANE = 'agent-shepherd'
 export const TITLE = 'Agents'
 
 export const isActive = (row: AgentRow) =>

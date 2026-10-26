@@ -5,8 +5,8 @@ import type { HerdSettings } from '../types'
 import { SOUND_OPTIONS, playSound } from './sounds'
 import { DEFAULT_SETTINGS, RECENT_CHOICES, SETTINGS_KEY, STALE_CHOICES } from './state'
 
-const settings = atom({ plugin: 'agent-herd', key: 'settings' } as const, DEFAULT_SETTINGS)
-const view = atom({ plugin: 'agent-herd', key: 'view' } as const, 'list')
+const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
+const view = atom({ plugin: 'agent-shepherd', key: 'view' } as const, 'list')
 
 type Flag = 'openOnStart' | 'hideAgents' | 'collapseAgents' | 'hideIdle' | 'hideFinished'
 

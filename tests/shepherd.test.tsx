@@ -1,9 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 
 const PANE = {
-  plugin: 'agent-herd',
+  plugin: 'agent-shepherd',
   component: 'Pane',
-  requestId: 'agent-herd',
+  requestId: 'agent-shepherd',
   props: {
     title: 'Agents',
     isFocused: false,
@@ -33,11 +33,11 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
   })
   // A heartbeat from before hostId existed: shown, but not a link.
   files.set(
-    '/home/t/.claude/agent-herd/sessions/s3.json',
+    '/home/t/.claude/agent-shepherd/sessions/s3.json',
     JSON.stringify({ id: 's3', project: 'old-project', title: 'Old', status: 'idle', since: 0 }),
   )
   files.set(
-    '/home/t/.claude/agent-herd/sessions/s2.json',
+    '/home/t/.claude/agent-shepherd/sessions/s2.json',
     JSON.stringify({
       id: 's2',
       hostId: 'local_s2',
@@ -50,7 +50,7 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
       ended: false,
     }),
   )
-  on('command.register', () => ({ value: { command: 'herd' } }))
+  on('command.register', () => ({ value: { command: 'shepherd' } }))
   let opens = 0
   on('ui.open', () => {
     opens += 1
@@ -82,7 +82,7 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
     })),
   }))
   on('fs.read', (_, e) => ({
-    value: files.get(`/home/t/.claude/agent-herd/sessions/${e.path.split('/').pop()}`) ?? '',
+    value: files.get(`/home/t/.claude/agent-shepherd/sessions/${e.path.split('/').pop()}`) ?? '',
   }))
   on('session.messages', () => ({ value: [] }))
   on('session.start', (_, e) => ({ cwd: e.cwd }))

@@ -6,12 +6,12 @@ import { AGENT_MARK, LEGEND, ORDER, SESSION_MARK } from './colors'
 import { renderSettings } from './renderSettings'
 import { DEFAULT_SETTINGS, elapsed, isActive } from './state'
 
-const agents = atom({ plugin: 'agent-herd', key: 'agents' } as const, [])
-const sessions = atom({ plugin: 'agent-herd', key: 'sessions' } as const, [])
-const now = atom({ plugin: 'agent-herd', key: 'now' } as const, 0)
-const agentsOpen = atom({ plugin: 'agent-herd', key: 'agentsOpen' } as const, null)
-const settings = atom({ plugin: 'agent-herd', key: 'settings' } as const, DEFAULT_SETTINGS)
-const view = atom({ plugin: 'agent-herd', key: 'view' } as const, 'list')
+const agents = atom({ plugin: 'agent-shepherd', key: 'agents' } as const, [])
+const sessions = atom({ plugin: 'agent-shepherd', key: 'sessions' } as const, [])
+const now = atom({ plugin: 'agent-shepherd', key: 'now' } as const, 0)
+const agentsOpen = atom({ plugin: 'agent-shepherd', key: 'agentsOpen' } as const, null)
+const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
+const view = atom({ plugin: 'agent-shepherd', key: 'view' } as const, 'list')
 
 // This session's card: a fill a step above the pane, a quiet outline, and a
 // lavender chip, a hue no state uses.

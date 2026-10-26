@@ -2,17 +2,17 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
 import type { AgentRow, AgentStatus, SelfState, SessionStatus } from '../types'
-import { beat, recoverTitle, refresh, sync } from './heartbeat'
+import { beat, recoverTitle, refresh, settingsFromOldName, sync } from './heartbeat'
 import { renderPane } from './renderPane'
 import { playSound } from './sounds'
 import { DEFAULT_SETTINGS, PANE, SETTINGS_KEY, TITLE, isActive, normalizeSettings } from './state'
 
 const IDLE: SelfState = { title: '', status: 'idle', since: 0 }
-const agents = atom({ plugin: 'agent-herd', key: 'agents' } as const, [])
-const now = atom({ plugin: 'agent-herd', key: 'now' } as const, 0)
-const self = atom({ plugin: 'agent-herd', key: 'self' } as const, IDLE)
-const settings = atom({ plugin: 'agent-herd', key: 'settings' } as const, DEFAULT_SETTINGS)
-const autoOpened = atom({ plugin: 'agent-herd', key: 'autoOpened' } as const, false)
+const agents = atom({ plugin: 'agent-shepherd', key: 'agents' } as const, [])
+const now = atom({ plugin: 'agent-shepherd', key: 'now' } as const, 0)
+const self = atom({ plugin: 'agent-shepherd', key: 'self' } as const, IDLE)
+const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
+const autoOpened = atom({ plugin: 'agent-shepherd', key: 'autoOpened' } as const, false)
 
 const HEARTBEAT_MS = 3000
 
@@ -53,7 +53,7 @@ const setStatus = async ($: EngineInterface, status: SessionStatus) => {
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
-      name: 'herd',
+      name: 'shepherd',
       description: 'Show the agent and session status pane',
     })
     // The title comes from the conversation's first prompt, read again at each
@@ -65,7 +65,9 @@ export const register: Register = on => {
     void sync($).catch(() => undefined)
 
     // Read the store itself: the settings atom fills only after the first sync.
-    const prefs = normalizeSettings(await $.store.get(SETTINGS_KEY).catch(() => undefined))
+    const saved = await $.store.get(SETTINGS_KEY).catch(() => undefined)
+    const prefs = normalizeSettings(saved ?? (await settingsFromOldName($)))
+    if (saved === undefined) await $.store.set(SETTINGS_KEY, prefs).catch(() => undefined)
     await update($, settings, () => prefs)
     // Once per session: a reload runs session.start again, and a pane closed
     // since should stay closed.
@@ -82,7 +84,7 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('command.run', { command: 'herd' }, async $ => {
+  on('command.run', { command: 'shepherd' }, async $ => {
     await refresh($).catch(() => undefined)
     await $.ui.open({ id: PANE, title: TITLE })
 
@@ -176,5 +178,5 @@ export const register: Register = on => {
     return next(e)
   })
 
-  on('ui.render', { component: 'Pane', requestId: 'agent-herd' }, renderPane)
+  on('ui.render', { component: 'Pane', requestId: 'agent-shepherd' }, renderPane)
 }

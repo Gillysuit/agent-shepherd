@@ -33,7 +33,7 @@ test('background subagents finishing do not chime; the last answer does, once', 
   on('agent.spawn', () => ({ model: 'claude-haiku-5-5', agentId: `a${++next}` }))
   on('turn.complete', () => ({ text: '' }))
   on('turn.start', (_, e) => ({ turnId: e.turnId }))
-  on('command.register', () => ({ value: { command: 'herd' } }))
+  on('command.register', () => ({ value: { command: 'shepherd' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('ui.status', () => ({ value: undefined }))
   on('clock.every', () => ({ value: undefined }))

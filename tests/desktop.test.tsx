@@ -1,9 +1,9 @@
 import { expect, test } from 'claude-code/testing'
 
 const PANE = {
-  plugin: 'agent-herd',
+  plugin: 'agent-shepherd',
   component: 'Pane',
-  requestId: 'agent-herd',
+  requestId: 'agent-shepherd',
   props: {
     title: 'Agents',
     isFocused: false,
@@ -53,7 +53,7 @@ test('sessions without the mod come from the desktop app records', async ($, on)
   record('c', 'cc', '/w/old', 'Archived one', { isArchived: true })
   files.set(`${PROJECTS}/-w-old/cc.jsonl`, '')
   // This session, which runs the mod: its heartbeat wins, the record's title with it.
-  record('s', 's1', '/w/agent-herd', 'Claude mods')
+  record('s', 's1', '/w/agent-shepherd', 'Claude mods')
 
   const inFolder = (dir: string) =>
     [...files.entries()].filter(([path]) => path.slice(0, path.lastIndexOf('/')) === dir)
@@ -93,9 +93,9 @@ test('sessions without the mod come from the desktop app records', async ($, on)
   }))
   on('store.get', () => ({ value: undefined }))
   on('session.id', () => ({ value: 's1' }))
-  on('session.cwd', () => ({ value: '/w/agent-herd' }))
+  on('session.cwd', () => ({ value: '/w/agent-shepherd' }))
   on('session.messages', () => ({ value: [] }))
-  on('command.register', () => ({ value: { command: 'herd' } }))
+  on('command.register', () => ({ value: { command: 'shepherd' } }))
   on('ui.status', () => ({ value: undefined }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('clock.every', () => ({ value: undefined }))

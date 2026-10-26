@@ -18,7 +18,7 @@ A herdr-style status pane for Claude Code. It sits beside the chat and shows eve
 At the prompt of a terminal session:
 
 ```
-/plugin install agent-herd --marketplace Gillysuit/agent-shepherd
+/plugin install agent-shepherd --marketplace Gillysuit/agent-shepherd
 ```
 
 Answer `y` to add the marketplace, then pick a scope (user scope loads it in every session).
@@ -26,19 +26,19 @@ Answer `y` to add the marketplace, then pick a scope (user scope loads it in eve
 From a shell:
 
 ```bash
-claude plugin install agent-herd --marketplace Gillysuit/agent-shepherd
+claude plugin install agent-shepherd --marketplace Gillysuit/agent-shepherd
 ```
 
 In the desktop app, where `/plugin` does not run: click **+** next to the prompt box, then **Plugins**, **Add marketplace** with `Gillysuit/agent-shepherd`, then **Add plugin**.
 
-Once installed, the pane opens in each new session (turn that off in ⚙). `/herd` opens it any time.
+Once installed, the pane opens in each new session (turn that off in ⚙). `/shepherd` opens it any time.
 
 ## Notes
 
 - **Approvals need the mod.** A session that doesn't run the mod can show working, done or idle, but not "needs approval": a pending permission prompt isn't written to its transcript. Restart it once and it runs the mod like the rest.
 - **The desktop records are undocumented.** The desktop app's session files aren't a public API. If an update changes them, those extra rows disappear; sessions running the mod keep working. The mod only reads them.
 - **Sounds play with `afplay`**, so they work on macOS. Elsewhere they stay silent.
-- **Files it writes:** one heartbeat file per session in `~/.claude/agent-herd/sessions/`. The mod can't delete files, so old ones build up there; they're tiny and ignored once stale, and safe to clear.
+- **Files it writes:** one heartbeat file per session in `~/.claude/agent-shepherd/sessions/`. The mod can't delete files, so old ones build up there; they're tiny and ignored once stale, and safe to clear.
 
 ## Development
 

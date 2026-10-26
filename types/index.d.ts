@@ -56,7 +56,7 @@ export type PaneView = 'list' | 'settings'
 
 declare module 'claude-code' {
   interface PluginState {
-    'agent-herd': {
+    'agent-shepherd': {
       agents: AgentRow[]
       now: number
       self: SelfState
