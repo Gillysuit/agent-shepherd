@@ -41,9 +41,12 @@ export type SessionBeat = {
 // The pane's preferences, kept in the mod's store and shared by every session.
 export type HerdSettings = {
   openOnStart: boolean
-  // 'off', one of the mod's chimes, or a macOS system sound's name.
+  // 'off', one of the mod's chimes, a macOS system sound's name, or
+  // 'file:' and the path of a sound from the person's folder.
   doneSound: string
   attentionSound: string
+  // Where the person's own sounds are; '~' is their home folder.
+  soundsFolder: string
   hideAgents: boolean
   collapseAgents: boolean
   hideIdle: boolean

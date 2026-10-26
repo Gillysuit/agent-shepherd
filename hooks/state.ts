@@ -1,5 +1,5 @@
 import type { AgentRow, HerdSettings } from '../types'
-import { isSound } from './sounds'
+import { DEFAULT_SOUNDS_FOLDER, isSound } from './sounds'
 
 export const PANE = 'agent-shepherd'
 export const TITLE = 'Agents'
@@ -20,6 +20,7 @@ export const DEFAULT_SETTINGS: HerdSettings = {
   openOnStart: true,
   doneSound: 'chime',
   attentionSound: 'beep',
+  soundsFolder: DEFAULT_SOUNDS_FOLDER,
   hideAgents: false,
   collapseAgents: true,
   hideIdle: false,
@@ -46,6 +47,7 @@ export const normalizeSettings = (value: unknown): HerdSettings => {
     attentionSound: isSound(saved.attentionSound)
       ? saved.attentionSound
       : silenced(saved) ? 'off' : DEFAULT_SETTINGS.attentionSound,
+    soundsFolder: typeof saved.soundsFolder === 'string' ? saved.soundsFolder : DEFAULT_SETTINGS.soundsFolder,
     hideAgents: flag('hideAgents'),
     collapseAgents: flag('collapseAgents'),
     hideIdle: flag('hideIdle'),
@@ -65,6 +67,7 @@ export const sameSettings = (a: HerdSettings, b: HerdSettings) =>
   a.openOnStart === b.openOnStart &&
   a.doneSound === b.doneSound &&
   a.attentionSound === b.attentionSound &&
+  a.soundsFolder === b.soundsFolder &&
   a.hideAgents === b.hideAgents &&
   a.collapseAgents === b.collapseAgents &&
   a.hideIdle === b.hideIdle &&

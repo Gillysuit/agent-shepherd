@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, RenderChildren, RenderInput } from 'claude-code'
 
 import type { HerdSettings } from '../types'
-import { SOUND_OPTIONS, playSound } from './sounds'
+import { SOUND_OPTIONS, fileLabel, folderSounds, playSound } from './sounds'
 import { DEFAULT_SETTINGS, RECENT_CHOICES, SETTINGS_KEY, STALE_CHOICES } from './state'
 
 const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
@@ -25,7 +25,17 @@ export async function renderSettings($: EngineInterface, e: RenderInput<'Pane'>)
   const table = $.ui.resolve(e)
   const { Box, Button, Text } = table
   const Select = 'Select' in table ? table.Select : undefined
+  const Input = 'Input' in table ? table.Input : undefined
   const current = await read($, settings)
+
+  // The person's own sounds follow the built-in ones. A chosen file that is no
+  // longer in the folder stays listed, so the dropdown still names it.
+  const mine = await folderSounds($, current.soundsFolder)
+  const kept = [current.doneSound, current.attentionSound]
+    .filter((value, at, all) => value.startsWith('file:') && all.indexOf(value) === at)
+    .filter(value => !mine.some(option => option.value === value))
+    .map(value => ({ value, label: fileLabel(value) }))
+  const soundOptions = [...SOUND_OPTIONS, ...mine, ...kept]
 
   // Every change is saved to the store, where every session's pane picks it up.
   const save = (next: HerdSettings) => {
@@ -81,10 +91,39 @@ export async function renderSettings($: EngineInterface, e: RenderInput<'Pane'>)
   // A toast confirms each pick, so a pick that never arrives is noticed.
   const pickSound = (field: 'doneSound' | 'attentionSound') => (name: string) => {
     save({ ...current, [field]: name })
-    const label = SOUND_OPTIONS.find(option => option.value === name)?.label ?? name
+    const label = soundOptions.find(option => option.value === name)?.label ?? name
     $.ui.toast(`${field === 'doneSound' ? 'Done' : 'Approval'} sound: ${label}`)
     void playSound($, name)
   }
+
+  // A new folder is listed at once, and a toast says what it holds.
+  const chooseFolder = async (folder: string) => {
+    save({ ...current, soundsFolder: folder.trim() })
+    const found = (await folderSounds($, folder)).length
+    $.ui.toast(found ? `Found ${found} sound${found === 1 ? '' : 's'}` : 'No sounds in that folder')
+  }
+
+  const folderRow = (
+    <Box key="sounds-folder" flexDirection="column">
+      {Input ? (
+        <Input
+          key="setting-sounds-folder"
+          label="Sounds folder"
+          value={current.soundsFolder}
+          placeholder="none"
+          submitLabel="save"
+          onSubmit={folder => void chooseFolder(folder)}
+        />
+      ) : (
+        <Text>Sounds folder: {current.soundsFolder || 'none'}</Text>
+      )}
+      <Text dimColor>
+        {mine.length
+          ? `${mine.length} sound${mine.length === 1 ? '' : 's'} added to the lists below`
+          : 'Add .wav, .aiff, .mp3 or .m4a files to use them below'}
+      </Text>
+    </Box>
+  )
 
   // Each row reads like a switch: its label, then an On or Off button.
   const toggleRow = (flag: Flag, label: string) => (
@@ -110,8 +149,9 @@ export async function renderSettings($: EngineInterface, e: RenderInput<'Pane'>)
       </Box>
       <Box flexDirection="column" gap={1}>
         {FLAGS.map(([flag, label]) => toggleRow(flag, label))}
-        {choiceRow('done-sound', 'Sound when a session is done', SOUND_OPTIONS, current.doneSound, pickSound('doneSound'), playButton('doneSound'))}
-        {choiceRow('attention-sound', 'Sound when it needs approval', SOUND_OPTIONS, current.attentionSound, pickSound('attentionSound'), playButton('attentionSound'))}
+        {folderRow}
+        {choiceRow('done-sound', 'Sound when a session is done', soundOptions, current.doneSound, pickSound('doneSound'), playButton('doneSound'))}
+        {choiceRow('attention-sound', 'Sound when it needs approval', soundOptions, current.attentionSound, pickSound('attentionSound'), playButton('attentionSound'))}
         {choiceRow('stale', 'Drop quiet sessions after', durations(STALE_CHOICES), String(current.staleSeconds), value =>
           save({ ...current, staleSeconds: Number(value) }),
         )}
