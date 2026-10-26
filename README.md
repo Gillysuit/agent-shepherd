@@ -4,6 +4,8 @@
 
 A herdr-style status pane for Claude Code. It sits beside the chat and shows every session and subagent you have running, each with its state, so you can see at a glance which one is working, which one needs you, and which one is done.
 
+> **Made for the Claude desktop app.** The pane, the Open buttons and the session list are built around the desktop app's Code tab. In the terminal CLI the mod does nothing at all: no pane, no sounds, no `/shepherd` command, no heartbeat, so a terminal session won't appear in the desktop panes either. VS Code sessions get the pane too, but it's only tested in the desktop app.
+
 <img src="docs/sessions.png" alt="The Agents pane: this session as a card, another session with an Open button, and the color legend at the bottom" width="420">
 
 ## What it does
@@ -40,6 +42,7 @@ Once installed, the pane opens in each new session (turn that off in ⚙). `/she
 - **Approvals need the mod.** A session that doesn't run the mod can show working, done or idle, but not "needs approval": a pending permission prompt isn't written to its transcript. Restart it once and it runs the mod like the rest.
 - **The desktop records are undocumented.** The desktop app's session files aren't a public API. If an update changes them, those extra rows disappear; sessions running the mod keep working. The mod only reads them.
 - **Sounds play with `afplay`**, so they work on macOS. Elsewhere they stay silent.
+- **Open uses the desktop app's links** (`claude://claude.ai/epitaxy/…`), so it only works with the desktop app installed.
 - **Files it writes:** one heartbeat file per session in `~/.claude/agent-shepherd/sessions/`. The mod can't delete files, so old ones build up there; they're tiny and ignored once stale, and safe to clear.
 
 ## Development

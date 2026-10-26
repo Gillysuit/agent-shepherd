@@ -50,8 +50,15 @@ const setStatus = async ($: EngineInterface, status: SessionStatus) => {
   void sync($).catch(() => undefined)
 }
 
+// Set at each session start, and read by every hook: a reload runs start again.
+let isTerminal = false
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
+    // Made for the desktop app: in the terminal CLI the mod stays out of the
+    // way entirely, with no pane, sound, command or heartbeat.
+    isTerminal = e.surface === 'terminal'
+    if (isTerminal) return next(e)
     await $.command.register({
       name: 'shepherd',
       description: 'Show the agent and session status pane',
@@ -80,6 +87,7 @@ export const register: Register = on => {
   })
 
   on('session.end', async ($, e, next) => {
+    if (isTerminal) return next(e)
     await beat($, true).catch(() => undefined)
     return next(e)
   })
@@ -93,6 +101,7 @@ export const register: Register = on => {
 
   // The first prompt names this session in every pane, as the sidebar does.
   on('prompt.submit', async ($, e, next) => {
+    if (isTerminal) return next(e)
     const title = e.text.replace(/\s+/g, ' ').trim().slice(0, 60)
     if (title && !e.text.startsWith('/')) {
       await update($, self, me => (me.title ? me : { ...me, title }))
@@ -101,6 +110,7 @@ export const register: Register = on => {
   }).catch(() => undefined)
 
   on('agent.spawn', async ($, e, next) => {
+    if (isTerminal) return next(e)
     const started = await next(e)
     const id = started.agentId ?? `${e.tool_use_id}:${e.description}`
     const row: AgentRow = {
@@ -122,6 +132,7 @@ export const register: Register = on => {
   }).catch(() => undefined)
 
   on('turn.start', async ($, e, next) => {
+    if (isTerminal) return next(e)
     if (e.agentId === undefined) {
       await setStatus($, 'working')
     } else {
@@ -132,6 +143,7 @@ export const register: Register = on => {
   })
 
   on('tool.call', async ($, e, next) => {
+    if (isTerminal) return next(e)
     const id = e.agentId
     if (id !== undefined) {
       await patchAgent($, id, row => ({ ...row, tools: row.tools + 1, lastTool: e.tool }))
@@ -148,6 +160,7 @@ export const register: Register = on => {
   // Fires only when a permission dialog is actually put to you, not for the
   // asks auto mode settles by itself; the tool.call hook clears it after.
   on('classic.PermissionRequest', async ($, e, next) => {
+    if (isTerminal) return next(e)
     const id = e.agent_id
     await chime($, 'attention')
     if (id === undefined) await setStatus($, 'blocked')
@@ -156,6 +169,7 @@ export const register: Register = on => {
   }).catch(() => undefined)
 
   on('turn.complete', async ($, e, next) => {
+    if (isTerminal) return next(e)
     const id = e.agentId
     if (id === undefined) {
       // An answered turn is done until the next one starts; an interrupted or
