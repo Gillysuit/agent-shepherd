@@ -1,3 +1,5 @@
+<img src=".claude-plugin/icon.png" alt="" width="96" align="right">
+
 # agent-shepherd
 
 A herdr-style status pane for Claude Code. It sits beside the chat and shows every session and subagent you have running, each with its state, so you can see at a glance which one is working, which one needs you, and which one is done.
