@@ -2,7 +2,7 @@ import { atom, read, update } from 'claude-code'
 import type { Color, EngineInterface, RenderInput } from 'claude-code'
 
 import type { AgentRow, SessionBeat } from '../types'
-import { AGENT_MARK, LEGEND, ORDER, SESSION_MARK } from './colors'
+import { ORDER, marks } from './colors'
 import { renderSettings } from './renderSettings'
 import { DEFAULT_SETTINGS, elapsed, isActive } from './state'
 
@@ -12,13 +12,7 @@ const now = atom({ plugin: 'agent-shepherd', key: 'now' } as const, 0)
 const agentsOpen = atom({ plugin: 'agent-shepherd', key: 'agentsOpen' } as const, null)
 const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
 const view = atom({ plugin: 'agent-shepherd', key: 'view' } as const, 'list')
-
-// This session's card: a fill a step above the pane, a quiet outline, and a
-// lavender chip, a hue no state uses.
-const MINE_FILL = '#24242b'
-const MINE_BORDER = '#45475a'
-const MINE_CHIP = '#363548'
-const MINE_LABEL = '#cba6f7'
+const theme = atom({ plugin: 'agent-shepherd', key: 'theme' } as const, 'dark')
 
 // The props for a state's second line: its own color, or dim when at rest.
 const tint = (isResting: boolean, color: Color) =>
@@ -34,14 +28,17 @@ const count = <S extends string>(list: { status: S }[], statuses: readonly S[]) 
 export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
   if ((await read($, view)) === 'settings') return renderSettings($, e)
   const { Box, Button, Text } = $.ui.resolve(e)
-  const [list, live, at, myId, openChoice, prefs] = await Promise.all([
+  const [list, live, at, myId, openChoice, prefs, look] = await Promise.all([
     read($, agents),
     read($, sessions),
     read($, now),
     $.session.id(),
     read($, agentsOpen),
     read($, settings),
+    read($, theme),
   ])
+  // The dots, the legend and this session's card, in the theme the app draws in.
+  const { session: SESSION_MARK, agent: AGENT_MARK, legend: LEGEND, mine } = marks(look)
   const isOpen = openChoice ?? !prefs.collapseAgents
   // Compact steps the text down a size and drops the gaps between rows.
   const gap = prefs.compact ? 0 : 1
@@ -72,7 +69,7 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
         flexDirection="column"
         paddingX={1}
         {...(isMine
-          ? { borderStyle: 'round', borderColor: MINE_BORDER, backgroundColor: MINE_FILL }
+          ? { borderStyle: 'round', borderColor: mine.border, backgroundColor: mine.fill }
           : {})}
       >
         <Box flexDirection="row" justifyContent="space-between" alignItems="center" gap={1}>
@@ -93,8 +90,8 @@ export async function renderPane($: EngineInterface, e: RenderInput<'Pane'>) {
             </Button>
           )}
           {isMine && (
-            <Box backgroundColor={MINE_CHIP} paddingX={1}>
-              <Text color={MINE_LABEL} size="caption" weight="semibold">
+            <Box backgroundColor={mine.chip} paddingX={1}>
+              <Text color={mine.label} size="caption" weight="semibold">
                 CURRENT
               </Text>
             </Box>

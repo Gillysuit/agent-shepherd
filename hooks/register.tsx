@@ -7,6 +7,7 @@ import { renderPane } from './renderPane'
 import { watchSoundsFolder } from './renderSettings'
 import { playSound } from './sounds'
 import { DEFAULT_SETTINGS, PANE, SETTINGS_KEY, TITLE, isActive, normalizeSettings } from './state'
+import { THEME_MS, syncTheme } from './theme'
 
 const IDLE: SelfState = { title: '', status: 'idle', since: 0 }
 const agents = atom({ plugin: 'agent-shepherd', key: 'agents' } as const, [])
@@ -72,6 +73,11 @@ export const register: Register = on => {
     $.clock.every(1000, () => void tick($).catch(() => undefined))
     $.clock.every(HEARTBEAT_MS, () => void sync($).catch(() => undefined))
     void sync($).catch(() => undefined)
+    // The colors follow the desktop app's theme: read before the pane opens,
+    // and again every few seconds so a switch recolors it.
+    const surface = e.surface
+    await syncTheme($, surface).catch(() => undefined)
+    $.clock.every(THEME_MS, () => void syncTheme($, surface).catch(() => undefined))
 
     // Read the store itself: the settings atom fills only after the first sync.
     const saved = await $.store.get(SETTINGS_KEY).catch(() => undefined)

@@ -59,6 +59,9 @@ export type HerdSettings = {
 
 export type PaneView = 'list' | 'settings'
 
+// Which look the pane draws in: the desktop app's theme, read from the app.
+export type Theme = 'dark' | 'light'
+
 declare module 'claude-code' {
   interface PluginState {
     'agent-shepherd': {
@@ -70,6 +73,7 @@ declare module 'claude-code' {
       agentsOpen: boolean | null
       settings: HerdSettings
       view: PaneView
+      theme: Theme
       autoOpened: boolean
       // Counts changes seen in the sounds folder while settings is open.
       soundsStamp: number

@@ -15,6 +15,7 @@ A herdr-style status pane for Claude Code. It sits beside the chat and shows eve
 - **Open any session.** Each row has an Open button that jumps the desktop app to that session.
 - **Subagents.** A collapsible section lists this session's subagents with their task, type, tool count and current tool.
 - **Sounds.** A sound when a session finishes and another when it needs approval: two chimes that ship with the mod, any macOS system sound, or your own. Drop `.wav`, `.aiff`, `.mp3` or `.m4a` files in `~/.claude/agent-shepherd/sounds/` (or pick another folder with Choose… in settings; Show opens it in the Finder) and they join both lists. Short clips work best: wav or aiff, under 2 seconds.
+- **Light and dark.** The colors follow the desktop app's theme: its own setting, or the Mac's appearance when the app follows the system. A switch recolors every open pane within a few seconds.
 - **Settings.** The ⚙ button opens settings, saved for every session: open the pane in every new session, your sounds folder, the two sounds (each with a ▶ preview), hide subagents, start them collapsed, hide idle sessions, hide finished subagents, and how long a quiet session stays listed.
 
 ## Install
@@ -41,6 +42,7 @@ Once installed, the pane opens in each new session (turn that off in ⚙). `/she
 
 - **Approvals need the mod.** A session that doesn't run the mod can show working, done or idle, but not "needs approval": a pending permission prompt isn't written to its transcript. Restart it once and it runs the mod like the rest.
 - **The desktop records are undocumented.** The desktop app's session files aren't a public API. If an update changes them, those extra rows disappear; sessions running the mod keep working. The mod only reads them.
+- **The theme is read from the desktop app's config** (`~/Library/Application Support/Claude/config.json`, undocumented like the records) and, when the app follows the system, from `defaults read -g AppleInterfaceStyle`. Outside the desktop app the pane follows Claude Code's own `/config` theme.
 - **Sounds play with `afplay`**, so they work on macOS. Elsewhere they stay silent.
 - **Open uses the desktop app's links** (`claude://claude.ai/epitaxy/…`), so it only works with the desktop app installed.
 - **Files it writes:** one heartbeat file per session in `~/.claude/agent-shepherd/sessions/`. The mod can't delete files, so old ones build up there; they're tiny and ignored once stale, and safe to clear.

@@ -59,10 +59,18 @@ test('sessions and subagents show their state, on every surface', async ($, on) 
   on('ui.status', () => ({ value: undefined }))
   on('clock.every', () => ({ value: undefined }))
   on('env.get', (_, e) => ({ value: e.name === 'HOME' ? '/home/t' : 'local_s1' }))
+  // A dark Mac: the theme probe answers 'Dark', and is not what `opened` watches.
   on('process.run', (_, e) => {
-    opened.push([...e.argv])
+    const isDefaults = e.argv[0] === 'defaults'
+    if (!isDefaults) opened.push([...e.argv])
     return {
-      value: { exitCode: 0, stdout: '', stderr: '', isStdoutTruncated: false, isStderrTruncated: false },
+      value: {
+        exitCode: 0,
+        stdout: isDefaults ? 'Dark' : '',
+        stderr: '',
+        isStdoutTruncated: false,
+        isStderrTruncated: false,
+      },
     }
   })
   on('classic.PermissionRequest', () => ({}))

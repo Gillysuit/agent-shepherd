@@ -1,6 +1,6 @@
 {
   "name": "agent-shepherd",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A herdr-style pane for Claude Code: every session and subagent with its state (working, needs approval, done, idle), Open buttons, and done/approval sounds",
   "author": { "name": "Gilbert Ramirez", "url": "https://github.com/Gillysuit" },
   "repository": "https://github.com/Gillysuit/agent-shepherd",
