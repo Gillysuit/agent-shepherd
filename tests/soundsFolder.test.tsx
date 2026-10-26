@@ -43,6 +43,11 @@ test('sounds in the person’s folder join the choices, and play from there', as
       isLink: false,
     })),
   }})
+  // A folder's modified time moves whenever a file goes in or out.
+  const stamps = new Map<string, number>()
+  on('fs.stat', (_, e) => ({
+    value: { kind: 'dir' as const, size: 0, mtimeMs: stamps.get(e.path) ?? 1, isLink: false },
+  }))
   on('fs.read', () => ({ value: '' }))
   on('fs.write', () => ({ value: undefined }))
   // The Finder's chooser answers with the folder picked, as osascript prints it.
@@ -91,6 +96,18 @@ test('sounds in the person’s folder join the choices, and play from there', as
   const before = listings
   await clock.advance(10_000)
   expect(listings - before).toBe(0)
+
+  // A sound dropped in while settings is open joins the lists within a second.
+  folders.get(MINE)?.push('purr.wav')
+  stamps.set(MINE, 2)
+  await clock.advance(1000)
+  expect(
+    await prefs.find({ type: 'Text', text: '~/.claude/agent-shepherd/sounds · 3 sounds in the lists below' }),
+  ).toBeDefined()
+  expect(await lastChoices()).toEqual([
+    { value: `file:${MINE}/meow.mp3`, label: 'meow' },
+    { value: `file:${MINE}/purr.wav`, label: 'purr' },
+  ])
 
   // Picking one saves its path and plays it from the folder.
   await prefs.select({ key: 'setting-done-sound', value: `file:${MINE}/bark.wav` })

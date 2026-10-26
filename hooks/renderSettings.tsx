@@ -2,11 +2,12 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, RenderChildren, RenderInput } from 'claude-code'
 
 import type { HerdSettings } from '../types'
-import { SOUND_OPTIONS, chooseFolder, fileLabel, folderSounds, playSound, showFolder } from './sounds'
+import { SOUND_OPTIONS, chooseFolder, expandHome, fileLabel, folderSounds, playSound, showFolder } from './sounds'
 import { DEFAULT_SETTINGS, RECENT_CHOICES, SETTINGS_KEY, STALE_CHOICES } from './state'
 
 const settings = atom({ plugin: 'agent-shepherd', key: 'settings' } as const, DEFAULT_SETTINGS)
 const view = atom({ plugin: 'agent-shepherd', key: 'view' } as const, 'list')
+const soundsStamp = atom({ plugin: 'agent-shepherd', key: 'soundsStamp' } as const, 0)
 
 type Flag = 'openOnStart' | 'hideAgents' | 'collapseAgents' | 'hideIdle' | 'hideFinished'
 
@@ -21,11 +22,31 @@ const FLAGS: readonly (readonly [Flag, string])[] = [
 const duration = (seconds: number) =>
   seconds < 60 ? `${seconds}s` : seconds < 3600 ? `${Math.round(seconds / 60)}m` : `${Math.round(seconds / 3600)}h`
 
+// Run every second: while settings is open, a sound added to or taken from the
+// folder changes its modified time, and the new stamp redraws the lists. The
+// first look after opening only notes the time: settings has just drawn, and a
+// redraw would jump an open dropdown.
+let seen: { dir: string; stamp: number } | null = null
+
+export async function watchSoundsFolder($: EngineInterface) {
+  if ((await read($, view)) !== 'settings') {
+    seen = null
+    return
+  }
+  const dir = await expandHome($, (await read($, settings)).soundsFolder.trim())
+  const stamp = dir ? ((await $.fs.stat(dir).catch(() => null))?.mtimeMs ?? 0) : 0
+  const changed = seen !== null && seen.dir === dir && seen.stamp !== stamp
+  seen = { dir, stamp }
+  if (changed) await update($, soundsStamp, n => n + 1)
+}
+
 export async function renderSettings($: EngineInterface, e: RenderInput<'Pane'>) {
   const table = $.ui.resolve(e)
   const { Box, Button, Text } = table
   const Select = 'Select' in table ? table.Select : undefined
   const current = await read($, settings)
+  // Read only so a change in the folder redraws this view.
+  await read($, soundsStamp)
 
   // The person's own sounds follow the built-in ones. A chosen file that is no
   // longer in the folder stays listed, so the dropdown still names it.

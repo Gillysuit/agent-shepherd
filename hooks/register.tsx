@@ -4,6 +4,7 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { AgentRow, AgentStatus, SelfState, SessionStatus } from '../types'
 import { beat, recoverTitle, refresh, settingsFromOldName, sync } from './heartbeat'
 import { renderPane } from './renderPane'
+import { watchSoundsFolder } from './renderSettings'
 import { playSound } from './sounds'
 import { DEFAULT_SETTINGS, PANE, SETTINGS_KEY, TITLE, isActive, normalizeSettings } from './state'
 
@@ -38,6 +39,7 @@ const agentSummary = (list: AgentRow[]) =>
 // Redraws elapsed times and the status line every second.
 const tick = async ($: EngineInterface) => {
   await update($, now, () => Date.now())
+  await watchSoundsFolder($)
   const list = await read($, agents)
   if (list.some(isActive)) await $.ui.status(`agents: ${agentSummary(list)}`)
 }

@@ -69,6 +69,8 @@ declare module 'claude-code' {
       settings: HerdSettings
       view: PaneView
       autoOpened: boolean
+      // Counts changes seen in the sounds folder while settings is open.
+      soundsStamp: number
     }
   }
 }
