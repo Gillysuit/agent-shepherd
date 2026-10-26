@@ -74,10 +74,9 @@ export const register: Register = on => {
     $.clock.every(HEARTBEAT_MS, () => void sync($).catch(() => undefined))
     void sync($).catch(() => undefined)
     // The colors follow the desktop app's theme: read before the pane opens,
-    // and again every few seconds so a switch recolors it.
-    const surface = e.surface
-    await syncTheme($, surface).catch(() => undefined)
-    $.clock.every(THEME_MS, () => void syncTheme($, surface).catch(() => undefined))
+    // again when a surface attaches, and every few seconds so a switch recolors it.
+    await syncTheme($).catch(() => undefined)
+    $.clock.every(THEME_MS, () => void syncTheme($).catch(() => undefined))
 
     // Read the store itself: the settings atom fills only after the first sync.
     const saved = await $.store.get(SETTINGS_KEY).catch(() => undefined)
@@ -91,6 +90,12 @@ export const register: Register = on => {
       void $.ui.open({ id: PANE, title: TITLE }).catch(() => undefined)
     }
 
+    return next(e)
+  })
+
+  // The desktop app attaches after the session starts: its theme applies then.
+  on('session.attach', async ($, e, next) => {
+    if (!isTerminal) await syncTheme($).catch(() => undefined)
     return next(e)
   })
 

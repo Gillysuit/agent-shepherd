@@ -36,9 +36,12 @@ async function systemTheme($: EngineInterface): Promise<Theme> {
 
 // The theme the pane is drawn in. In the desktop app, the app's own choice,
 // or the system's when it follows that; anywhere else, Claude Code's own
-// theme setting (/config), whose light themes all start with 'light'.
-export async function detectTheme($: EngineInterface, surface: string | null): Promise<Theme> {
-  if (surface === 'desktop') {
+// theme setting (/config), whose light themes all start with 'light'. The
+// app starts its sessions with no surface and attaches after, so whether this
+// is the app is read from the session's surfaces each time, never once at start.
+export async function detectTheme($: EngineInterface): Promise<Theme> {
+  const surfaces = await $.session.surfaces().catch(() => [])
+  if (surfaces.includes('desktop')) {
     const home = (await $.env.get('HOME')) ?? ''
     const mode = parseMode(await $.fs.read(configPath(home)).catch(() => ''))
     return mode === 'system' ? systemTheme($) : mode
@@ -48,7 +51,7 @@ export async function detectTheme($: EngineInterface, surface: string | null): P
 }
 
 // Reads the theme and writes it only when it changed: a write redraws the pane.
-export async function syncTheme($: EngineInterface, surface: string | null) {
-  const next = await detectTheme($, surface)
+export async function syncTheme($: EngineInterface) {
+  const next = await detectTheme($)
   if ((await read($, theme)) !== next) await update($, theme, () => next)
 }

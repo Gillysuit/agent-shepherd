@@ -22,11 +22,16 @@ const LIGHT = { fill: '#e6e9ef', label: '#8839ef', dot: '#179299' }
 const HOME = '/home/t'
 const CONFIG = `${HOME}/Library/Application Support/Claude/config.json`
 
-// The engine beneath the mod: files in memory, and what `defaults` answers for
-// the system appearance ('Dark', or nothing, which fails as on a light Mac).
+// The engine beneath the mod: files in memory, what `defaults` answers for
+// the system appearance ('Dark', or nothing, which fails as on a light Mac),
+// and the surfaces the session draws on.
 const world = (on: Parameters<TestBody>[1]) => {
   const files = new Map<string, string>()
-  const system = { appearance: null as 'Dark' | null, theme: 'dark' }
+  const system = {
+    appearance: null as 'Dark' | null,
+    theme: 'dark',
+    surfaces: ['desktop'] as ('desktop' | 'vscode')[],
+  }
   const inFolder = (dir: string) =>
     [...files.entries()].filter(([path]) => path.slice(0, path.lastIndexOf('/')) === dir)
   on('env.get', (_, e) => ({ value: e.name === 'HOME' ? HOME : 'local_s1' }))
@@ -74,6 +79,8 @@ const world = (on: Parameters<TestBody>[1]) => {
   }))
   on('store.get', () => ({ value: undefined }))
   on('store.set', () => ({ value: undefined }))
+  on('session.surfaces', () => ({ value: system.surfaces }))
+  on('session.attach', (_, e) => ({ clientId: e.clientId }))
   on('session.id', () => ({ value: 's1' }))
   on('session.cwd', () => ({ value: '/w/my-app' }))
   on('session.messages', () => ({ value: [] }))
@@ -138,6 +145,7 @@ test("outside the desktop app the pane follows Claude Code's own theme", async (
   // The desktop config says light, but this is VS Code: the /config theme wins.
   files.set(CONFIG, JSON.stringify({ userThemeMode: 'light' }))
   system.theme = 'dark-daltonized'
+  system.surfaces = ['vscode']
   await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
   await $.turn.start({ text: 'hi', turnId: 'm1' })
   await $.turn.complete({ answer: 'done', durationMs: 1, isAborted: false, turnId: 'm1', reason: 'answer' })
@@ -146,4 +154,22 @@ test("outside the desktop app the pane follows Claude Code's own theme", async (
   system.theme = 'light-ansi'
   await $.session.start({ cwd: '/', surface: 'vscode', isInteractive: true })
   expect(await card($, 'vscode')).toEqual(LIGHT)
+})
+
+test('a desktop session that starts with no surface takes the app theme once the app attaches', async ($, on) => {
+  const { files, system } = world(on)
+  // The app follows a light Mac, while Claude Code's own theme is dark. The app
+  // starts the session with no surface, so only the /config theme is known yet.
+  files.set(CONFIG, JSON.stringify({ userThemeMode: 'system' }))
+  system.theme = 'dark-daltonized'
+  system.surfaces = []
+  await $.session.start({ cwd: '/', surface: null, isInteractive: false })
+  await $.turn.start({ text: 'hi', turnId: 'm1' })
+  await $.turn.complete({ answer: 'done', durationMs: 1, isAborted: false, turnId: 'm1', reason: 'answer' })
+  expect(await card($, 'desktop')).toEqual(DARK)
+
+  // The app attaches: the pane takes its light theme without a restart.
+  system.surfaces = ['desktop']
+  await $.session.attach({ surface: 'desktop', clientId: 'desktop:default' })
+  expect(await card($, 'desktop')).toEqual(LIGHT)
 })
