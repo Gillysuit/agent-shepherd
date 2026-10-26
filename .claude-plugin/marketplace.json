@@ -1,0 +1,5 @@
+{
+  "name": "agent-shepherd",
+  "owner": { "name": "Gilbert Ramirez", "url": "https://github.com/Gillysuit" },
+  "plugins": [{ "name": "agent-herd", "source": "./" }]
+}
