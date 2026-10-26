@@ -62,7 +62,9 @@ export async function beat($: EngineInterface, ended = false) {
 // session may have changed.
 export async function refresh($: EngineInterface) {
   const saved = normalizeSettings(await $.store.get(SETTINGS_KEY))
-  await update($, settings, current => (sameSettings(current, saved) ? current : saved))
+  // Every write redraws the readers, an equal value too, and a redraw jumps an
+  // open dropdown back to its choice: write only a real change.
+  if (!sameSettings(await read($, settings), saved)) await update($, settings, () => saved)
   const dir = await folder($)
   const entries = await $.fs.list(dir).catch(() => [])
   // A session whose file has not been written for this long has closed.

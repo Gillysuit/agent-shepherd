@@ -1,4 +1,4 @@
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 
 const PANE = {
   plugin: 'agent-shepherd',
@@ -31,7 +31,10 @@ test('sounds in the person’s folder join the choices, and play from there', as
     store.set(e.key, e.value)
     return { value: undefined }
   })
-  on('fs.list', (_, e) => ({
+  let listings = 0
+  on('fs.list', (_, e) => {
+    if (e.path === MINE) listings += 1
+    return {
     value: (folders.get(e.path ?? '') ?? []).map(name => ({
       name,
       kind: 'file' as const,
@@ -39,7 +42,7 @@ test('sounds in the person’s folder join the choices, and play from there', as
       mtimeMs: Date.now(),
       isLink: false,
     })),
-  }))
+  }})
   on('fs.read', () => ({ value: '' }))
   on('fs.write', () => ({ value: undefined }))
   // The Finder's chooser answers with the folder picked, as osascript prints it.
@@ -59,7 +62,7 @@ test('sounds in the person’s folder join the choices, and play from there', as
   on('command.register', () => ({ value: { command: 'shepherd' } }))
   on('ui.open', () => ({ value: { isPlaced: true } }))
   on('ui.status', () => ({ value: undefined }))
-  on('clock.every', () => ({ value: undefined }))
+  const clock = mock.clock(on, { now: Date.now() })
   on('session.id', () => ({ value: 's1' }))
   on('session.cwd', () => ({ value: '/home/t/my-app' }))
   on('session.messages', () => ({ value: [] }))
@@ -82,6 +85,12 @@ test('sounds in the person’s folder join the choices, and play from there', as
     { value: `file:${MINE}/bark.wav`, label: 'bark' },
     { value: `file:${MINE}/meow.mp3`, label: 'meow' },
   ])
+
+  // Left alone, settings never redraws: a redraw jumps an open dropdown back
+  // to its choice. Each draw lists the folder, so the listings count draws.
+  const before = listings
+  await clock.advance(10_000)
+  expect(listings - before).toBe(0)
 
   // Picking one saves its path and plays it from the folder.
   await prefs.select({ key: 'setting-done-sound', value: `file:${MINE}/bark.wav` })
